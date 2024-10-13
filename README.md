@@ -116,10 +116,10 @@
 
 3. Go To frontend and install all dependencies
 
-    ```
-    cd frontend/
-    npm i
-    ```
+  ```
+  cd frontend/
+  npm i
+  ```
 
 4. Go To admin and install all dependencies
 
