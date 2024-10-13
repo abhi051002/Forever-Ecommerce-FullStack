@@ -64,7 +64,7 @@ export const ForgotPassword = () => {
         </span>
       </div>
       <input
-        type={showPassword ? "text" : "password"} // Toggle password visibility
+        type="password"
         className="w-full py-2 px-3 border border-gray-800"
         placeholder="Re-enter Password"
         value={reenterpassword}
