@@ -43,6 +43,13 @@ const Navbar = () => {
           <p>Contact</p>
           <hr className="w-2/4 border-none h-[1.5px] bg-gray-700 hidden" />
         </NavLink>
+        <NavLink
+          className="flex flex-col items-center gap-1"
+          to="https://forever-admin-pannel.vercel.app/"
+        >
+          <p className="px-2 rounded-md text-gray-700 border bg-slate-300 ">Admin Panel</p>
+          <hr className="w-2/4 border-none h-[1.5px] bg-gray-700 hidden" />
+        </NavLink>
       </ul>
 
       <div className="flex items-center gap-6">
