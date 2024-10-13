@@ -6,10 +6,15 @@ import CartTotal from "../components/CartTotal";
 import { toast } from "react-toastify";
 
 const Cart = () => {
-  const { products, currency, cartItems, updateQuantity, navigate } =
+  const { products, currency, cartItems, updateQuantity, navigate, token } =
     useContext(ShopContext);
   const [cartData, setCartData] = useState([]);
   const [proceedToPayment, setProceedToPayment] = useState(false);
+  useEffect(() => {
+    if (!localStorage.getItem("token")) {
+      navigate("/login");
+    }
+  }, []);
   useEffect(() => {
     if (products.length > 0) {
       const tempData = [];
