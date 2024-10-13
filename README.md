@@ -1,5 +1,11 @@
 # Forever-Ecommerce
 
+# Home Page
+
+## This is the homepage of Forever Ecommerce
+
+<img src="frontend/src/assets/home.png" style="padding:0 10px;"/>
+
 ## Backend Packages Used in this app
 
 1. cors : We can allows the frontend ip to access backend
@@ -14,7 +20,6 @@
 10. validator : we validate the user data coming from frontend
 11. cloudinary : this is a popular cloud-based image and video management service
 12. bcrypt : using this we will encrypt our user password and stored in database
-
 
 ## Packeaged used in Admin Panel
 
