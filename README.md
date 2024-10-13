@@ -135,5 +135,5 @@
   ```
 
 6. Then Copy all folder .env.example to .env
-7. Get Al the Required .env values
+7. Get All the Required .env values
 8. Then Start the application
