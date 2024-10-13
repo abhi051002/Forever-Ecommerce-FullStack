@@ -101,4 +101,45 @@ const adminLogin = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser, adminLogin };
+// Route for password change
+const changePassword = async (req, res) => {
+  try {
+    const { email, password, reenterpassword } = req.body;
+
+    // check if the user is not exist
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+    const isMatched = await bcrypt.compare(password, user.password);
+
+    if (password !== reenterpassword) {
+      return res.json({
+        success: false,
+        message: "Two Password must be same.",
+      });
+    }
+
+    if (isMatched) {
+      return res.json({
+        success: false,
+        message: "New password should not be same as current password.",
+      });
+    }
+
+    // Hasing User Password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(reenterpassword, salt);
+
+    // Updating user password
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ success: true, message: "Password changed successfully" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+export { loginUser, registerUser, adminLogin, changePassword };
