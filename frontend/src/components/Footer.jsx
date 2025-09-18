@@ -1,6 +1,7 @@
 import { assets } from "../assets/assets";
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
   return (
     <div className="">
       <div className="fle flex-col sm:grid grid-cols-[3fr_1fr_1fr] gap-14 my-10 mt-40 text-sm">
@@ -33,7 +34,7 @@ const Footer = () => {
       <div>
         <hr />
         <p className="py-5 text-sm text-center">
-          Copyright 2024@ forever.com- All Right Reserved
+          Copyright {currentYear}@ forever.com- All Right Reserved
         </p>
       </div>
     </div>

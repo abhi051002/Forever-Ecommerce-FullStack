@@ -6,10 +6,11 @@ import RelatedProducts from "../components/RelatedProducts";
 
 const Product = () => {
   const { productId } = useParams();
-  const { products, currency, addToCart } = useContext(ShopContext);
+  const { products, currency, addToCart, cartItems, updateQuantity } = useContext(ShopContext);
   const [productData, setProductData] = useState(false);
   const [image, setImage] = useState("");
   const [size, setSize] = useState("");
+
   const fetchProductData = async () => {
     products.map((item) => {
       if (item._id === productId) {
@@ -19,6 +20,7 @@ const Product = () => {
       }
     });
   };
+
   useEffect(() => {
     products.map((item) => {
       if (item._id === productId) {
@@ -28,7 +30,46 @@ const Product = () => {
       }
     });
   }, [productId, products]);
-  // console.log(productData);
+
+  // Get current quantity for selected size
+  const getCurrentQuantity = () => {
+    if (!size || !cartItems[productId]) return 0;
+    return cartItems[productId][size] || 0;
+  };
+
+  // Handle quantity increment
+  const incrementQuantity = () => {
+    if (!size) {
+      toast.error("Please Select a Size");
+      return;
+    }
+    const currentQty = getCurrentQuantity();
+    updateQuantity(productId, size, currentQty + 1);
+  };
+
+  // Handle quantity decrement
+  const decrementQuantity = () => {
+    if (!size) {
+      toast.error("Please Select a Size");
+      return;
+    }
+    const currentQty = getCurrentQuantity();
+    if (currentQty > 0) {
+      updateQuantity(productId, size, currentQty - 1);
+    }
+  };
+
+  // Handle add to cart (for first time addition)
+  const handleAddToCart = () => {
+    if (!size) {
+      toast.error("Please Select a Size");
+      return;
+    }
+    addToCart(productId, size);
+  };
+
+  const currentQuantity = getCurrentQuantity();
+
   return productData ? (
     <div className="border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100">
       {/* Product Data */}
@@ -50,7 +91,7 @@ const Product = () => {
             <img src={image} alt="" className="w-full h-auto" />
           </div>
         </div>
-        {/* Prpduct Information */}
+        {/* Product Information */}
         <div className="flex-1">
           <h1 className="font-medium text-2xl mt-2">{productData.name}</h1>
           <div className="flex items-center gap-1 mt-2">
@@ -68,7 +109,7 @@ const Product = () => {
           <p className="mt-5 text-gray-500 md:w-4/5">
             {productData.description}
           </p>
-          <div className="fle flex-col gap-4 my-8">
+          <div className="flex flex-col gap-4 my-8">
             <p>Select Size</p>
             <div className="flex gap-2">
               {productData.sizes.map((item, index) => (
@@ -84,12 +125,42 @@ const Product = () => {
               ))}
             </div>
           </div>
-          <button
-            className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700"
-            onClick={() => addToCart(productData._id, size)}
-          >
-            ADD TO CART
-          </button>
+
+          {/* Quantity Display and Controls */}
+          {size && currentQuantity > 0 && (
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-sm font-medium">Quantity in cart:</span>
+              <div className="flex items-center border border-gray-300 rounded">
+                <button
+                  onClick={decrementQuantity}
+                  className="px-3 py-1 hover:bg-gray-100 text-lg font-medium"
+                  disabled={currentQuantity <= 0}
+                >
+                  −
+                </button>
+                <span className="px-4 py-1 border-x border-gray-300 min-w-[50px] text-center">
+                  {currentQuantity}
+                </span>
+                <button
+                  onClick={incrementQuantity}
+                  className="px-3 py-1 hover:bg-gray-100 text-lg font-medium"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Add to Cart or Update Quantity */}
+          <div className="flex gap-3">
+            <button
+              className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700"
+              onClick={handleAddToCart}
+            >
+              {currentQuantity > 0 ? "ADD MORE TO CART" : "ADD TO CART"}
+            </button>
+          </div>
+
           <hr className="mt-8 sm:w-4/5" />
           <div className="text-sm text-gray-500 flex mt-5 flex-col gap-1">
             <p className="">100% Original Products</p>
@@ -98,7 +169,7 @@ const Product = () => {
           </div>
         </div>
       </div>
-      {/* Despriction and Review System */}
+      {/* Description and Review System */}
       <div className="mt-20">
         <div className="flex">
           <b className="border px-5 py-3 text-sm">Description</b>
