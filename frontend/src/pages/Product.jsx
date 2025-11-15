@@ -3,147 +3,194 @@ import { useParams } from "react-router-dom";
 import { ShopContext } from "../context/ShopContext";
 import { assets } from "../assets/assets";
 import RelatedProducts from "../components/RelatedProducts";
+import { toast } from "react-toastify";
 
 const Product = () => {
   const { productId } = useParams();
-  const { products, currency, addToCart, cartItems, updateQuantity } = useContext(ShopContext);
+  const { products, currency, addToCart, cartItems, updateQuantity } =
+    useContext(ShopContext);
+
   const [productData, setProductData] = useState(false);
   const [image, setImage] = useState("");
   const [size, setSize] = useState("");
 
-  const fetchProductData = async () => {
-    products.map((item) => {
-      if (item._id === productId) {
-        setProductData(item);
-        setImage(item.image[0]);
-        return null;
-      }
-    });
-  };
+  // NEW → total stock of all sizes
+  const totalStock = productData
+    ? productData.sizes.reduce((sum, s) => sum + s.stock, 0)
+    : 0;
 
   useEffect(() => {
-    products.map((item) => {
-      if (item._id === productId) {
-        setProductData(item);
-        setImage(item.image[0]);
-        return null;
-      }
-    });
+    const found = products.find((item) => item._id === productId);
+    if (found) {
+      setProductData(found);
+      setImage(found.image[0]);
+    }
   }, [productId, products]);
 
-  // Get current quantity for selected size
   const getCurrentQuantity = () => {
     if (!size || !cartItems[productId]) return 0;
     return cartItems[productId][size] || 0;
   };
 
-  // Handle quantity increment
+  const getSizeStock = () => {
+    if (!size) return 0;
+    const obj = productData.sizes.find((s) => {
+      const val = Object.values(s).find((v) => typeof v === "string");
+      return val === size;
+    });
+    return obj?.stock || 0;
+  };
+
   const incrementQuantity = () => {
-    if (!size) {
-      toast.error("Please Select a Size");
-      return;
-    }
+    if (!size) return toast.error("Please select a size");
+
+    const stock = getSizeStock();
     const currentQty = getCurrentQuantity();
+
+    if (currentQty >= stock) {
+      return toast.error(`Only ${stock} items available`);
+    }
+
     updateQuantity(productId, size, currentQty + 1);
   };
 
-  // Handle quantity decrement
   const decrementQuantity = () => {
-    if (!size) {
-      toast.error("Please Select a Size");
-      return;
-    }
+    if (!size) return toast.error("Please select a size");
+
     const currentQty = getCurrentQuantity();
+
     if (currentQty > 0) {
       updateQuantity(productId, size, currentQty - 1);
     }
   };
 
-  // Handle add to cart (for first time addition)
   const handleAddToCart = () => {
-    if (!size) {
-      toast.error("Please Select a Size");
-      return;
-    }
+    if (!size) return toast.error("Please select a size");
+
+    const stock = getSizeStock();
+    const currentQty = getCurrentQuantity();
+
+    if (stock === 0) return toast.error(`Size ${size} is out of stock`);
+
+    if (currentQty >= stock)
+      return toast.error(`You already added max ${stock} items`);
+
     addToCart(productId, size);
   };
 
   const currentQuantity = getCurrentQuantity();
+  const selectedStock = getSizeStock(); // NEW
 
   return productData ? (
-    <div className="border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100">
-      {/* Product Data */}
-      <div className="flex gap-12 sm:gap-12 flex-col sm:flex-row">
-        {/* Product Images */}
+    <div className="border-t-2 pt-10">
+
+      {/* -------- Product Layout -------- */}
+      <div className="flex gap-12 flex-col sm:flex-row">
+
+        {/* Images */}
         <div className="flex-1 flex flex-col-reverse gap-3 sm:flex-row">
-          <div className="flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-between sm:justify-normal sm:w-[18.7%] w-full">
-            {productData?.image.map((img, index) => (
+          <div className="flex sm:flex-col overflow-x-auto sm:overflow-y-scroll">
+            {productData.image.map((img, i) => (
               <img
-                key={index}
+                key={i}
                 src={img}
-                alt={productData.name}
-                className="w-[24%] sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer"
+                className="w-[24%] sm:w-full cursor-pointer"
                 onClick={() => setImage(img)}
               />
             ))}
           </div>
           <div className="w-full sm:w-[80%]">
-            <img src={image} alt="" className="w-full h-auto" />
+            <img src={image} className="w-full h-auto" />
           </div>
         </div>
-        {/* Product Information */}
+
+        {/* -------- Product Info -------- */}
         <div className="flex-1">
-          <h1 className="font-medium text-2xl mt-2">{productData.name}</h1>
-          <div className="flex items-center gap-1 mt-2">
-            <img src={assets.star_icon} alt="" className="w-3" />
-            <img src={assets.star_icon} alt="" className="w-3" />
-            <img src={assets.star_icon} alt="" className="w-3" />
-            <img src={assets.star_icon} alt="" className="w-3" />
-            <img src={assets.star_dull_icon} alt="" className="w-3" />
-            <p className="pl-2">(122)</p>
-          </div>
+
+          <h1 className="text-2xl font-medium">{productData.name}</h1>
+
+          {/* PRICE */}
           <p className="mt-5 text-3xl font-medium">
             {currency}
             {productData.price}
           </p>
+
+          {/* NEW → Total Stock Display */}
+          <p
+            className={`
+                mt-2 font-medium
+                ${totalStock === 0
+                  ? "text-gray-500"
+                  : totalStock <= 5
+                    ? "text-red-600"
+                    : "text-green-600"}
+            `}
+          >
+            {totalStock === 0
+              ? "Out of Stock"
+              : `Total Stock Available: ${totalStock}`}
+          </p>
+
           <p className="mt-5 text-gray-500 md:w-4/5">
             {productData.description}
           </p>
+
+          {/* ---------- SELECT SIZE ---------- */}
           <div className="flex flex-col gap-4 my-8">
             <p>Select Size</p>
+
             <div className="flex gap-2">
-              {productData.sizes.map((item, index) => (
-                <button
-                  key={index}
-                  className={`border py-2 px-4 bg-gray-100 ${
-                    item === size ? "border-orange-500" : ""
-                  }`}
-                  onClick={() => setSize(item)}
-                >
-                  {item}
-                </button>
-              ))}
+              {productData.sizes.map((item, index) => {
+                const sizeValue = Object.values(item).find(
+                  (v) => typeof v === "string"
+                );
+                const stock = item.stock;
+
+                return (
+                  <button
+                    key={index}
+                    disabled={stock === 0}
+                    className={`border px-4 py-2 bg-gray-100 
+                      ${sizeValue === size ? "border-orange-500" : ""}
+                      ${stock === 0 ? "opacity-50 cursor-not-allowed" : ""}
+                    `}
+                    onClick={() => stock > 0 && setSize(sizeValue)}
+                  >
+                    {sizeValue} {stock === 0 && "(Out of Stock)"}
+                  </button>
+                );
+              })}
             </div>
+
+            {/* NEW → SHOW STOCK FOR SELECTED SIZE */}
+            {size && (
+              <p className="text-sm text-blue-600 font-medium">
+                Available Stock for size {size}: {selectedStock}
+              </p>
+            )}
+
           </div>
 
-          {/* Quantity Display and Controls */}
+          {/* --------- Quantity Controls --------- */}
           {size && currentQuantity > 0 && (
             <div className="flex items-center gap-4 mb-4">
               <span className="text-sm font-medium">Quantity in cart:</span>
-              <div className="flex items-center border border-gray-300 rounded">
+
+              <div className="flex items-center border rounded">
                 <button
                   onClick={decrementQuantity}
-                  className="px-3 py-1 hover:bg-gray-100 text-lg font-medium"
-                  disabled={currentQuantity <= 0}
+                  className="px-3 py-1 text-lg"
                 >
                   −
                 </button>
-                <span className="px-4 py-1 border-x border-gray-300 min-w-[50px] text-center">
+
+                <span className="px-4 py-1 border-x min-w-[50px] text-center">
                   {currentQuantity}
                 </span>
+
                 <button
                   onClick={incrementQuantity}
-                  className="px-3 py-1 hover:bg-gray-100 text-lg font-medium"
+                  className="px-3 py-1 text-lg"
                 >
                   +
                 </button>
@@ -151,57 +198,25 @@ const Product = () => {
             </div>
           )}
 
-          {/* Add to Cart or Update Quantity */}
-          <div className="flex gap-3">
-            <button
-              className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700"
-              onClick={handleAddToCart}
-            >
-              {currentQuantity > 0 ? "ADD MORE TO CART" : "ADD TO CART"}
-            </button>
-          </div>
+          {/* -------- Add to Cart -------- */}
+          <button
+            className="bg-black text-white px-8 py-3 text-sm"
+            onClick={handleAddToCart}
+          >
+            {currentQuantity > 0 ? "ADD MORE TO CART" : "ADD TO CART"}
+          </button>
 
-          <hr className="mt-8 sm:w-4/5" />
-          <div className="text-sm text-gray-500 flex mt-5 flex-col gap-1">
-            <p className="">100% Original Products</p>
-            <p>Cash On Delivery is available on this products</p>
-            <p>Easy Return and Replacement Policy within 7 days</p>
-          </div>
-        </div>
-      </div>
-      {/* Description and Review System */}
-      <div className="mt-20">
-        <div className="flex">
-          <b className="border px-5 py-3 text-sm">Description</b>
-          <p className="border px-5 py-3 text-sm">Reviews(122)</p>
-        </div>
-        <div className="flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500">
-          <p>
-            An e-commerce website is an online platform that facilitates the
-            buying and selling of products or services over the internet. It
-            serves as a virtual marketplace where businesses and individuals can
-            showcase their products, interact with customers, and conduct
-            transactions without the need for a physical presence. E-commerce
-            websites have gained immense popularity due to their convenience,
-            accessibility, and the global reach they offer.
-          </p>
-          <p>
-            E-commerce websites typically display products or services along
-            with detailed descriptions, images, prices, and any available
-            variations (e.g., sizes, colors). Each product usually has its own
-            dedicated page with relevant information.
-          </p>
         </div>
       </div>
 
-      {/* Display related products */}
+      {/* Related Products */}
       <RelatedProducts
         category={productData.category}
         subCategory={productData.subCategory}
       />
     </div>
   ) : (
-    <div className="opacity-0"></div>
+    <div></div>
   );
 };
 

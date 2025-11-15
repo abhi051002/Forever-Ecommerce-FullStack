@@ -1,7 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import productModel from "../models/productModel.js";
 
-// Function for add product
+// Add Product
 const addProduct = async (req, res) => {
   try {
     const {
@@ -13,37 +13,68 @@ const addProduct = async (req, res) => {
       sizes,
       bestseller,
     } = req.body;
-    const image1 = req.files.image1?.[0] || null;
-    const image2 = req.files.image2?.[0] || null;
-    const image3 = req.files.image3?.[0] || null;
-    const image4 = req.files.image4?.[0] || null;
 
-    const images = [image1, image2, image3, image4].filter(
-      (item) => item !== null
-    );
+    // --- Handle Images ---
+    const imageFiles = [
+      req.files.image1?.[0] || null,
+      req.files.image2?.[0] || null,
+      req.files.image3?.[0] || null,
+      req.files.image4?.[0] || null,
+    ].filter((file) => file !== null);
 
-    let imagesUrl = await Promise.all(
-      images.map(async (item) => {
-        let result = await cloudinary.uploader.upload(item.path, {
+    const imageUrls = await Promise.all(
+      imageFiles.map(async (file) => {
+        const result = await cloudinary.uploader.upload(file.path, {
           resource_type: "image",
         });
         return result.secure_url;
       })
     );
-    const productData = {
+
+    // =============================
+    //   SIZE VALIDATION START
+    // =============================
+    let parsedSizes = [];
+    try {
+      parsedSizes = JSON.parse(sizes);
+
+      if (!Array.isArray(parsedSizes)) {
+        throw new Error("Sizes must be an array");
+      }
+
+      // Validate and filter sizes
+      parsedSizes = parsedSizes.filter((s) => {
+        if (!s.size || s.stock === undefined) return false; // invalid format
+        return Number(s.stock) >= 1; // keep only sizes with stock >= 1
+      });
+
+      // No valid size with stock?
+      if (parsedSizes.length === 0) {
+        return res.json({
+          success: false,
+          message: "Add at least one size with stock",
+        });
+      }
+    } catch (err) {
+      return res.json({ success: false, message: "Invalid sizes format" });
+    }
+    // =============================
+    //   SIZE VALIDATION END
+    // =============================
+
+    // --- Create Product ---
+    const product = new productModel({
       name,
       description,
       category,
       price: Number(price),
       subCategory,
-      bestseller: bestseller === "true" ? true : false,
-      sizes: JSON.parse(sizes),
-      image: imagesUrl,
+      bestseller: bestseller === "true",
+      sizes: parsedSizes,
+      image: imageUrls,
       date: Date.now(),
-    };
-    console.log(productData);
+    });
 
-    const product = new productModel(productData);
     await product.save();
 
     res.json({ success: true, message: "Product Added Successfully." });
@@ -53,36 +84,33 @@ const addProduct = async (req, res) => {
   }
 };
 
-// Function for list product
+// List all products
 const listProduct = async (req, res) => {
   try {
     const products = await productModel.find({});
     res.json({ success: true, products });
   } catch (error) {
-    console.log(error);
     res.json({ success: false, message: error.message });
   }
 };
 
-// Function for removing product
+// Remove product
 const removeProduct = async (req, res) => {
   try {
     await productModel.findByIdAndDelete(req.body.id);
     res.json({ success: true, message: "Product removed successfully" });
   } catch (error) {
-    console.log(error);
     res.json({ success: false, message: error.message });
   }
 };
 
-// Function for single product info
+// Single product info
 const singleProduct = async (req, res) => {
   try {
     const { productId } = req.body;
     const singleProduct = await productModel.findById(productId);
     res.json({ success: true, singleProduct });
   } catch (error) {
-    console.log(error);
     res.json({ success: false, message: error.message });
   }
 };
