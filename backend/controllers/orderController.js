@@ -7,6 +7,7 @@ import sendMail from "../config/sendMail.js";
 
 import { userOrderTemplate } from "../templates/userOrderTemplate.js";
 import { adminOrderTemplate } from "../templates/adminOrderTemplate.js";
+import { orderStatusTemplate } from "../templates/orderStatusTemplate .js";
 
 const currency = "usd";
 const deliveryCharge = 10;
@@ -26,7 +27,7 @@ const updateProductStock = async (items) => {
 
     if (!product) continue;
 
-    const sizeIndex = product.sizes.findIndex(s => s.size === item.size);
+    const sizeIndex = product.sizes.findIndex((s) => s.size === item.size);
 
     if (sizeIndex !== -1) {
       product.sizes[sizeIndex].stock -= item.quantity;
@@ -39,7 +40,6 @@ const updateProductStock = async (items) => {
     await product.save();
   }
 };
-
 
 /* ----------------------------------------------
                ⭐ COD ORDER
@@ -54,7 +54,7 @@ const placeOrder = async (req, res) => {
       items,
       amount,
       paymentMethod: "COD",
-      payment: true,      // COD = paid by default
+      payment: false, // COD = paid by default
       date: Date.now(),
       address,
     });
@@ -68,7 +68,11 @@ const placeOrder = async (req, res) => {
     await userModel.findByIdAndUpdate(userId, { cartData: {} });
 
     // Email
-    await sendMail(user.email, "Order Placed ✔", userOrderTemplate(newOrder, items));
+    await sendMail(
+      user.email,
+      "Order Placed ✔",
+      userOrderTemplate(newOrder, items)
+    );
     await sendMail(
       process.env.ADMIN_EMAIL,
       "New Order Received 🚀",
@@ -81,7 +85,6 @@ const placeOrder = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
-
 
 /* ----------------------------------------------
                ⭐ STRIPE ORDER
@@ -149,7 +152,6 @@ const placeOrderStripe = async (req, res) => {
   }
 };
 
-
 /* ----------------------------------------------
           ⭐ VERIFY STRIPE PAYMENT
 ------------------------------------------------*/
@@ -178,7 +180,6 @@ const verifyStripe = async (req, res) => {
   }
 };
 
-
 /* ----------------------------------------------
               ⭐ RAZORPAY ORDER
 ------------------------------------------------*/
@@ -199,7 +200,11 @@ const placeOrderRazorpay = async (req, res) => {
 
     await newOrder.save();
 
-    await sendMail(user.email, "Order Created - Wait for Payment", "<p>Complete payment to confirm.</p>");
+    await sendMail(
+      user.email,
+      "Order Created - Wait for Payment",
+      "<p>Complete payment to confirm.</p>"
+    );
     await sendMail(
       process.env.ADMIN_EMAIL,
       "New Razorpay Order",
@@ -224,7 +229,6 @@ const placeOrderRazorpay = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
-
 
 /* ----------------------------------------------
          ⭐ VERIFY RAZORPAY PAYMENT
@@ -255,19 +259,64 @@ const verifyRazorpay = async (req, res) => {
   }
 };
 
-
 /* ----------------------------------------------
       ⭐ ADMIN — ALL ORDERS
 ------------------------------------------------*/
+// ⭐ ADMIN — ALL ORDERS WITH SEARCH + FILTER + PAGINATION
 const allOrders = async (req, res) => {
   try {
-    const orders = await orderModel.find({});
-    res.json({ success: true, orders });
+    let {
+      page = 1,
+      limit = 10,
+      search = "",
+      status = "",
+      paymentMethod = "",
+    } = req.query;
+
+    page = Number(page);
+    limit = Number(limit);
+
+    const query = {};
+
+    // 🔍 Search by Name, Email, Phone, City (inside address)
+    if (search.trim() !== "") {
+      query.$or = [
+        { "address.firstName": { $regex: search, $options: "i" } },
+        { "address.lastName": { $regex: search, $options: "i" } },
+        { "address.phone": { $regex: search, $options: "i" } },
+        { "address.city": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Filter by Order Status
+    if (status.trim() !== "") query.status = status;
+
+    // Filter by Payment Method
+    if (paymentMethod.trim() !== "") query.paymentMethod = paymentMethod;
+
+    const total = await orderModel.countDocuments(query);
+
+    const orders = await orderModel
+      .find(query)
+      .sort({ date: -1 }) // newest first
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.json({
+      success: true,
+      orders,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
+    console.log(error);
     res.json({ success: false, message: error.message });
   }
 };
-
 
 /* ----------------------------------------------
       ⭐ USER — THEIR ORDERS
@@ -282,7 +331,6 @@ const usersOrders = async (req, res) => {
   }
 };
 
-
 /* ----------------------------------------------
       ⭐ ADMIN — UPDATE ORDER STATUS
 ------------------------------------------------*/
@@ -290,10 +338,30 @@ const updateStatus = async (req, res) => {
   try {
     const { orderId, status } = req.body;
 
-    await orderModel.findByIdAndUpdate(orderId, { status });
+    // Update order
+    const updatedOrder = await orderModel.findByIdAndUpdate(
+      orderId,
+      { status },
+      { new: true }
+    );
 
-    res.json({ success: true, message: "Order status updated" });
+    if (!updatedOrder) {
+      return res.json({ success: false, message: "Order not found" });
+    }
+
+    // Get user info for email
+    const user = await userModel.findById(updatedOrder.userId);
+    if (user) {
+      await sendMail(
+        user.email,
+        `Your Order Status Updated`,
+        orderStatusTemplate(user, updatedOrder, status)
+      );
+    }
+
+    res.json({ success: true, message: "Order status updated & email sent" });
   } catch (error) {
+    console.log(error);
     res.json({ success: false, message: error.message });
   }
 };

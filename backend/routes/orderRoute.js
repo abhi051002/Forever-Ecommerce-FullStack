@@ -15,7 +15,7 @@ import authUser from "../middleware/auth.js";
 const orderRouter = express.Router();
 
 // Addmin Features
-orderRouter.post("/list", adminAuth, allOrders);
+orderRouter.get("/list", adminAuth, allOrders);
 orderRouter.post("/status", adminAuth, updateStatus);
 
 // Payment Features

@@ -15,7 +15,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Verify } from "./pages/Verify";
 import { ForgotPassword } from "./pages/ForgotPassword";
-import VerifyEmail from "./pages/VerifyEmail ";
+import VerifyEmail from "./pages/VerifyEmail";
 import LoginOTP from "./pages/LoginOTP";
 
 const App = () => {

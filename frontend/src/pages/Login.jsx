@@ -11,11 +11,13 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
 
     try {
+      setLoading(true);
       if (currentState === "Sign Up") {
         // REGISTER API
         const response = await axios.post(backendUrl + "/api/user/register", {
@@ -56,6 +58,8 @@ const Login = () => {
     } catch (error) {
       console.log(error);
       toast.error(error.response?.data?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -139,8 +143,21 @@ const Login = () => {
         </div>
       )}
 
-      <button className="bg-black text-white font-light px-8 py-2 mt-4 hover:rounded-lg">
-        {currentState === "Login" ? "Login" : "Sign Up"}
+      <button
+        disabled={loading}
+        className={`bg-black text-white font-light px-8 py-2 mt-4 hover:rounded-lg 
+      ${loading && "opacity-60 cursor-not-allowed"}`}
+      >
+        {loading ? (
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            Loading...
+          </div>
+        ) : currentState === "Login" ? (
+          "Login"
+        ) : (
+          "Sign Up"
+        )}
       </button>
     </form>
   );

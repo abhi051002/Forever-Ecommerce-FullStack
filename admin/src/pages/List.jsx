@@ -2,20 +2,49 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { backEndURL, currency } from "../App";
 import { toast } from "react-toastify";
+import ProductUpdateModal from "./ProductUpdateModal";
+import { FiEdit } from "react-icons/fi";
+import { RiDeleteBin6Line } from "react-icons/ri";
+import { IoSearchOutline } from "react-icons/io5";
+
 const List = ({ token }) => {
   const [list, setList] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
+  // Filters + pagination
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
+  const [subCategory, setSubCategory] = useState("");
+  const [bestseller, setBestseller] = useState("");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(10);
+
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Fetch List With Filters & Pagination
   const fetchList = async () => {
     try {
-      const response = await axios.get(backEndURL + "/api/product/list");
+      const response = await axios.get(`${backEndURL}/api/product/list`, {
+        params: {
+          page: currentPage,
+          limit,
+          search,
+          category,
+          subCategory,
+          bestseller,
+        },
+      });
+
       if (response.data.success) {
         setList(response.data.products);
+        setTotalPages(response.data.totalPages || 1);
       } else {
         toast.error(response.data.message);
       }
     } catch (error) {
       toast.error(error.message);
-      console.error(error.message);
     }
   };
 
@@ -28,54 +57,230 @@ const List = ({ token }) => {
       );
       if (response.data.success) {
         toast.success(response.data.message);
-        await fetchList();
+        fetchList();
       } else {
         toast.error(response.data.message);
       }
     } catch (error) {
       toast.error(error.message);
-      console.error(error.message);
     }
   };
 
   useEffect(() => {
     fetchList();
-  }, []);
+  }, [currentPage]); // update when page changes
+
+  // Apply filters
+  const applyFilters = () => {
+    setCurrentPage(1);
+    fetchList();
+  };
+
   return (
     <>
-      <p className="mb-2">All Products List</p>
-      <div className="flex flex-col gap-2">
-        {/* List Table Title */}
-        <div className="hidden md:grid grid-cols-[1fr_3fr_1fr_1fr_1fr] items-center py-1 px-2 border bg-gray-100 text-sm">
-          <strong>Image</strong>
-          <strong>Name</strong>
-          <strong>Category</strong>
-          <strong>Price</strong>
-          <strong className="text-center">Actions</strong>
+      <p className="mb-3 text-lg font-semibold">Product Management</p>
+
+      {/* SEARCH + FILTERS */}
+      {/* SEARCH + FILTERS */}
+      <div className="bg-white p-4 rounded-lg shadow mb-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Search */}
+        <div className="relative">
+          <IoSearchOutline
+            size={20}
+            className="absolute left-3 top-3 text-gray-500"
+          />
+          <input
+            type="text"
+            placeholder="Search product..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 p-2 border rounded-md"
+          />
         </div>
 
-        {/* Product List */}
-        {list.map((item, index) => (
-          <div
-            className="grid grid-cols-[1fr_3fr_1fr] md:grid-cols-[1fr_3fr_1fr_1fr_1fr] items-center gap-2 pu-1 px-2 border text-sm"
-            key={index}
+        {/* Category */}
+        <select
+          className="border p-2 rounded-md"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          <option value="">All Categories</option>
+          <option value="Men">Men</option>
+          <option value="Women">Women</option>
+          <option value="Kids">Kids</option>
+        </select>
+
+        {/* Sub Category */}
+        <select
+          className="border p-2 rounded-md"
+          value={subCategory}
+          onChange={(e) => setSubCategory(e.target.value)}
+        >
+          <option value="">All Sub Categories</option>
+          <option value="Topwear">Topwear</option>
+          <option value="Bottomwear">Bottomwear</option>
+          <option value="Winterwear">Winterwear</option>
+        </select>
+
+        {/* Bestseller */}
+        <select
+          value={bestseller}
+          onChange={(e) => setBestseller(e.target.value)}
+          className="border p-2 rounded-md"
+        >
+          <option value="">All Products</option>
+          <option value="true">Bestseller Only</option>
+        </select>
+
+        {/* BUTTONS — Apply + Clear */}
+        <div className="md:col-span-4 flex gap-3">
+          {/* APPLY FILTERS */}
+          <button
+            className="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+            onClick={applyFilters}
           >
-            <img src={item.image[0]} alt="" className="w-12" />
-            <p>{item.name}</p>
-            <p>{item.category}</p>
-            <p>
+            Apply Filters
+          </button>
+
+          {/* CLEAR FILTERS */}
+          <button
+            className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-md hover:bg-gray-400 transition"
+            onClick={() => {
+              setSearch("");
+              setCategory("");
+              setSubCategory("");
+              setBestseller("");
+              setCurrentPage(1);
+              fetchList(); // reload all products
+            }}
+          >
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
+      {/* PRODUCT LIST */}
+      <div className="flex flex-col gap-2">
+        <div className="hidden md:grid grid-cols-[1fr_3fr_1fr_1fr_1fr_1fr] py-2 px-3 border bg-gray-100 text-sm font-semibold">
+          <p>Image</p>
+          <p>Name</p>
+          <p>Category</p>
+          <p>Price</p>
+          <p className="text-center">Edit</p>
+          <p className="text-center">Delete</p>
+        </div>
+
+        {list.length === 0 && (
+          <p className="text-center text-gray-600 mt-3">No Products Found</p>
+        )}
+
+        {list.map((item) => (
+          <div
+            key={item._id}
+            className="grid grid-cols-[1fr_3fr_1fr] md:grid-cols-[1fr_3fr_1fr_1fr_1fr_1fr]
+                       items-center gap-3 py-2 px-3 border rounded-md bg-white shadow-sm"
+          >
+            <img
+              src={item.image[0]}
+              className="w-12 h-12 object-cover rounded-md"
+              alt="product"
+            />
+
+            <p className="font-medium">{item.name}</p>
+
+            <p className="text-gray-600">{item.category}</p>
+
+            <p className="font-semibold">
               {currency}
               {item.price}
             </p>
-            <p
-              className="text-right md:text-center cursor-pointer text-lg text-red-400"
+
+            {/* Edit */}
+            <button
+              className="hidden md:flex justify-center text-blue-600 hover:text-blue-800 transition"
+              onClick={() => {
+                setSelectedProduct(item);
+                setShowModal(true);
+              }}
+            >
+              <FiEdit size={20} />
+            </button>
+
+            {/* Delete */}
+            <button
+              className="hidden md:flex justify-center text-red-500 hover:text-red-700 transition"
               onClick={() => removeProduct(item._id)}
             >
-              X
-            </p>
+              <RiDeleteBin6Line size={20} />
+            </button>
+
+            {/* MOBILE BUTTONS */}
+            <div className="flex md:hidden gap-4 justify-center">
+              <button
+                onClick={() => {
+                  setSelectedProduct(item);
+                  setShowModal(true);
+                }}
+                className="text-blue-600 hover:text-blue-800 transition"
+              >
+                <FiEdit size={20} />
+              </button>
+
+              <button
+                onClick={() => removeProduct(item._id)}
+                className="text-red-500 hover:text-red-700 transition"
+              >
+                <RiDeleteBin6Line size={20} />
+              </button>
+            </div>
           </div>
         ))}
       </div>
+
+      {/* PAGINATION */}
+      <div className="flex justify-center gap-2 mt-5">
+        {/* Prev */}
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((p) => p - 1)}
+          className="px-3 py-2 border rounded disabled:opacity-50"
+        >
+          Prev
+        </button>
+
+        {/* Page Numbers */}
+        {Array.from({ length: totalPages }, (_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrentPage(i + 1)}
+            className={`px-3 py-2 border rounded ${
+              currentPage === i + 1 ? "bg-blue-600 text-white" : ""
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
+
+        {/* Next */}
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((p) => p + 1)}
+          className="px-3 py-2 border rounded disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+
+      {/* UPDATE MODAL */}
+      {showModal && (
+        <ProductUpdateModal
+          key={selectedProduct._id}
+          product={selectedProduct}
+          closeModal={() => setShowModal(false)}
+          refreshList={fetchList}
+          token={token}
+        />
+      )}
     </>
   );
 };
