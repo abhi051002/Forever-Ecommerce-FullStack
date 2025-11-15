@@ -1,142 +1,236 @@
 # Forever-Ecommerce
 
-## Here I'm providing some screenshots of my website
+A full-featured MERN stack eCommerce application with secure OTP authentication, product size-wise stock management, order email notifications, and a complete admin dashboard.
 
-## User Feature
+---
 
-### Homepage of Forever Ecommerce
+# 🚀 New Features Added
 
-- Here Some of Our Best Sellers Products and Latest Collections are Listed.
-- User Can click on any product to see about more details about that product.
+## 🔐 Email OTP Verification (Register & Login)
 
-<img src="frontend/src/assets/home.png" alt="Home Page" style="padding:0 10px;"/>
+- OTP sent to user email at **registration** for account verification  
+- OTP sent again during **login** for secure authentication  
+- OTP expires after a few minutes  
+- **Resend OTP** appears after a 60-second timer  
+- User cannot log in without verifying email  
 
-### Collection Page
+---
 
-- Here All Of Our Products and Collections are available.
-- User Can click on any product to see about more details about that product.
-- User Can filter products by category and sub-category and also filter by low to high price and vice versa.
+## ✉ Order Email Notifications
 
-<img src="frontend/src/assets/collection.png" alt="Collection Page" style="padding:0 10px;"/>
+After a successful order:
 
-### About Page
+- The **user receives an order confirmation mail**
+- The **admin receives a new order notification mail**
 
-- This Page Contain Information about our missions , our product quality and Why you Choose us!!
+Emails include:
+- Order items  
+- Quantities  
+- Prices  
+- Payment method  
+- Shipping address  
 
-<img src="frontend/src/assets/about.png" alt="About Page" style="padding:0 10px;"/>
+---
 
-### Contact Page
+## 📦 Product Size & Stock Management
 
-- Here You can find our contact information and contact on any queries.
+Admin can add sizes (S, M, L, XL etc.) with individual stock.
 
-<img src="frontend/src/assets/contact.png" alt="Contact Page" style="padding:0 10px;"/>
+User Side Features:
+- If size stock < 5 → **Red low-stock warning**
+- If size stock = 0 → **Size disabled**
+- User cannot cart more quantity than available stock
+- During ordering, backend also checks stock to prevent overselling
 
-### Login & Register Form
+---
 
-- Here user can login by providing the Login Credentials belongs to that user.
-- User is validating here by JWT tokens.
+# 📸 Screenshots
 
-<img src="frontend/src/assets/login.png" alt="Login Page" style="padding:0 10px;"/>
+## User Features
 
-- Here if you are new to our website then you can register youself with unique email-id.
-- Here also user is validated by JWT tokens.
+### 🔐 Login & Register
 
-<img src="frontend/src/assets/signup.png" alt="Register Page" style="padding:0 10px;"/>
+![Login Page](frontend/src/assets/login.png)
+![Signup Page](frontend/src/assets/signup.png)
 
-### Cart Page
+---
 
-- A Logged in User Can add Items to Cart by selecting the product and its sizes.
-- User can see all his cart items by clicking on the Cart Icon which is on the righ top handside.
+### 🏠 Homepage
 
-<img src="frontend/src/assets/cartpage.png" alt="Cart Page" style="padding:0 10px;"/>
+![Home Page](frontend/src/assets/home.png)
 
-### Payment Page
+---
 
-- After Selecting All our favourite Products to the Cart you can visit the Cart Page and Proceed to Payments.
-- Here you can purchase products with a choice of 3 different pay options
-  - COD (Cash On Delivery)
-  - Stripe
-  - Razorpay
+### 🛍 Collection Page
 
-<img src="frontend/src/assets/payment-order.png" alt="Payment Page" style="padding:0 10px;"/>
+![Collection Page](frontend/src/assets/collection.png)
 
-### Orders Page
+---
 
-- After The Successful Payment You can view all you order by clicking the Profile Icon > Order.
-- All of your Orders are listed here you can track these orders.
+### ℹ About Page
 
-<img src="frontend/src/assets/order.png" alt="Order Page" style="padding:0 10px;"/>
+![About Page](frontend/src/assets/about.png)
 
-## Admin Features
+---
 
-### Admin Login
+### ☎ Contact Page
 
-- Here Admin can login by providing the Login Credentials belongs to that admin.
-- Admin is validating here by JWT tokens.
+![Contact Page](frontend/src/assets/contact.png)
 
-<img src="frontend/src/assets/admin-login.png" alt="Admin Login Page" style="padding:0 10px;"/>
+---
 
-### Add Products
+### 🛒 Cart Page
 
-- Admin have the rights to add products so that user can buy them.
-- Admin can share the various angle pictures of the products.
-- Admin can Fill the product form and add the products.
+![Cart Page](frontend/src/assets/cartpage.png)
 
-<img src="frontend/src/assets/add-items.png" alt="Add Item Page" style="padding:0 10px;"/>
+---
 
-### All Products
+### 💳 Payment Page
 
-- Here in List Items admin can see all products present in our website.
-- Admin can delete any product if that does not exist anymore.
+![Payment Page](frontend/src/assets/payment-order.png)
 
-<img src="frontend/src/assets/all-items.png" alt="All Products Page" style="padding:0 10px;"/>
+---
 
-### All Orders
+### 📦 Orders Page
 
-- Here Admin can access all orders that placed from different users.
-- Admin can change the status of the order from here.
+![Order Page](frontend/src/assets/order.png)
 
-<img src="frontend/src/assets/all-orders.png" alt="All Order Page" style="padding:0 10px;"/>
+---
 
-# How to run this Website
+# 🛠 Admin Features
 
-## First Time Installation Only
+### 🔐 Admin Login
 
-1. Clone this repository
+![Admin Login](frontend/src/assets/admin-login.png)
 
-  ```
-  git clone git@github.com:abhi051002/Forever-Ecommerce-FullStack.git
-  ```
+---
 
-2. Then Go to the Project directory
+### ➕ Add Product (with sizes & stock)
 
-  ```
-  cd Forever-Ecommerce-FullStack
-  ```
+![Add Product](frontend/src/assets/add-items.png)
 
-3. Go To frontend and install all dependencies
+---
 
-  ```
-  cd frontend/
-  npm i
-  ```
+### 📦 All Products
 
-4. Go To admin and install all dependencies
+![All Products](frontend/src/assets/all-items.png)
 
-  ```
-  cd admin/
-  npm i
-  ```
+---
 
-5. Go To backend and install all dependencies
-  ```
-  cd backend/
-  npm i
-  ```
+### 🧾 All Orders
 
-6. Then Copy all folder .env.example to .env
-7. Get All the Required .env values
-8. Then Start the application
+![All Orders](frontend/src/assets/all-orders.png)
 
-**Don't Forgot to star the Repository**
-**Thank You For Visiting**
+---
+
+# ⚙ Backend Packages Used
+
+| Package | Purpose |
+|--------|---------|
+| **cors** | Allow frontend to access backend |
+| **dotenv** | Environment variables |
+| **express** | Create REST APIs |
+| **jsonwebtoken** | JWT auth system |
+| **mongoose** | MongoDB connection |
+| **multer** | Upload images |
+| **nodemon** | Auto restart on backend changes |
+| **razorpay** | Payment gateway |
+| **stripe** | Payment gateway |
+| **validator** | Validate email & password |
+| **cloudinary** | Image hosting |
+| **bcrypt** | Encrypt passwords |
+| **nodemailer** | Send OTP emails & order emails |
+
+---
+
+# 🧑‍💻 How to Run This Project
+
+## 1️⃣ Clone the Repository
+```bash
+git clone git@github.com:abhi051002/Forever-Ecommerce-FullStack.git
+```
+
+## 2️⃣ Go to Project Directory
+```
+cd Forever-Ecommerce-FullStack
+```
+## 3️⃣ Install Frontend Dependencies
+```
+cd frontend
+npm install
+```
+## 4️⃣ Install Admin Dependencies
+```
+cd admin
+npm install
+```
+## 5️⃣ Install Backend Dependencies
+```
+cd backend
+npm install
+```
+---
+# 🔧 Environment Setup
+Copy `.env.example` → `.env`
+```
+cp .env.example .env
+```
+and fill values:
+
+```
+MONGO_URI=your_mongo_uri
+JWT_SECRET=your_secret_key
+
+# SMTP Credentials
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+
+# Payment Keys
+STRIPE_SECRET=xxxx
+RAZORPAY_KEY_ID=xxxx
+RAZORPAY_KEY_SECRET=xxxx
+
+```
+
+----
+
+# ▶ Start Application
+## Start Backend
+```
+cd backend
+npm run server
+```
+
+## Start User Frontend
+```
+cd frontend
+npm run dev
+```
+
+## Start Admin Panel
+```
+cd admin
+npm run dev
+```
+
+---
+# ⭐ Support
+
+If you found this project helpful, please ⭐ star the repository!
+
+Thank you for visiting Forever-Ecommerce! ❤️
+
+---
+
+If you want, I can also:
+
+✅ Add badges (Made with React, Node, MongoDB, etc.)  
+✅ Add GIF demo preview  
+✅ Add API documentation section  
+Just tell me!
+
+If you face any issues or have suggestions, feel free to mail us at  
+👉 **[abhijitnanda8249@gmail.com](mailto:abhijitnanda8249@gmail.com)**
+

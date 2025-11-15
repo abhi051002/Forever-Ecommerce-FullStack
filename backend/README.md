@@ -1,14 +1,27 @@
 ## Backend Packages Used in this app
 
-1. cors : We can allows the frontend ip to access backend
-2. dotenv : Using this we can use enviorment variables
-3. express : Using this we can we can create apis
-4. jsonwebtoken : Using this we can enables the user authentication so that user can login
-5. mongoose : this will manage our database connectivity
-6. multer : This will allows us to store our images on our coludinary storage
-7. nodemon : this will restart our app when use make any changes in backend
-8. razorpay : to setup the payment integration
-9. stripe : to setup the payment integration
-10. validator : we validate the user data coming from frontend
-11. cloudinary : this is a popular cloud-based image and video management service
-12. bcrypt : using this we will encrypt our user password and stored in database
+1. cors : Allows the frontend to access backend APIs by handling Cross-Origin requests.
+
+2. dotenv : Lets us use environment variables securely.
+
+3. express : Used to create APIs and handle backend routing.
+
+4. jsonwebtoken : Enables user authentication by generating & verifying JWT tokens.
+
+5. mongoose : Manages MongoDB database connection and schema models.
+
+6. multer : Helps upload images/files from frontend and store them (local or cloud).
+
+7. nodemon : Automatically restarts the backend server on file changes.
+
+8. razorpay : Used to integrate Razorpay payment gateway.
+
+9. stripe : Used to integrate Stripe payment gateway.
+
+10. validator : Validates incoming user data such as email, mobile, etc.
+
+11. cloudinary : Cloud image/video storage and CDN delivery.
+
+12. bcrypt : Encrypts and stores user passwords securely.
+
+13. nodemailer : Allows sending emails (OTP, verification, login OTP, etc.) using SMTP.

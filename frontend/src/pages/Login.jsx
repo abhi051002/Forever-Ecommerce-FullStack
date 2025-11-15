@@ -5,42 +5,57 @@ import axios from "axios";
 
 const Login = () => {
   const { token, setToken, navigate, backendUrl } = useContext(ShopContext);
+
   const [currentState, setCurrentState] = useState("Login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // New state for showing password
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+
     try {
       if (currentState === "Sign Up") {
+        // REGISTER API
         const response = await axios.post(backendUrl + "/api/user/register", {
           name,
           email,
           password,
         });
+
         if (response.data.success) {
-          setToken(response.data.token);
-          localStorage.setItem("token", response.data.token);
+          console.log(response.data.user._id);
+          // Store email for OTP verification
+          localStorage.setItem("verifyEmail", response.data.user.email);
+          localStorage.setItem("verifyUserId", response.data.user._id);
+
+          toast.success("OTP sent to your email.");
+          navigate(`/verify-email/${response.data.user._id}`); // Redirect to OTP page
         } else {
           toast.error(response.data.message);
         }
       } else {
+        // LOGIN API
         const response = await axios.post(backendUrl + "/api/user/login", {
           email,
           password,
         });
+
         if (response.data.success) {
-          setToken(response.data.token);
-          localStorage.setItem("token", response.data.token);
+          // Store email for login OTP
+          localStorage.setItem("loginEmail", response.data.email);
+          localStorage.setItem("loginUserId", response.data.userId);
+
+          toast.success("OTP sent to your email.");
+          navigate("/login-otp"); // Redirect to OTP page
         } else {
           toast.error(response.data.message);
         }
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
 
@@ -59,9 +74,8 @@ const Login = () => {
         <p className="prata-regular text-3xl">{currentState}</p>
         <hr className="border-none h-[1.5px] w-8 bg-gray-800" />
       </div>
-      {currentState === "Login" ? (
-        ""
-      ) : (
+
+      {currentState === "Login" ? null : (
         <input
           type="text"
           className="w-full py-2 px-3 border border-gray-800"
@@ -71,6 +85,7 @@ const Login = () => {
           required
         />
       )}
+
       <input
         type="email"
         className="w-full py-2 px-3 border border-gray-800"
@@ -79,9 +94,10 @@ const Login = () => {
         onChange={(e) => setEmail(e.target.value)}
         required
       />
+
       <div className="relative w-full">
         <input
-          type={showPassword ? "text" : "password"} // Toggle password visibility
+          type={showPassword ? "text" : "password"}
           className="w-full py-2 px-3 border border-gray-800"
           placeholder="Password"
           value={password}
@@ -89,12 +105,13 @@ const Login = () => {
           required
         />
         <span
-          onClick={() => setShowPassword(!showPassword)} // Toggle state on click
+          onClick={() => setShowPassword(!showPassword)}
           className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
         >
-          {showPassword ? "Hide" : "Show"} {/* Show/Hide text */}
+          {showPassword ? "Hide" : "Show"}
         </span>
       </div>
+
       {currentState === "Login" ? (
         <div className="w-full flex justify-between text-sm mt-[-8px]">
           <p
@@ -121,8 +138,9 @@ const Login = () => {
           </p>
         </div>
       )}
+
       <button className="bg-black text-white font-light px-8 py-2 mt-4 hover:rounded-lg">
-        {!currentState === "Login" ? "Sign Up" : "Login"}
+        {currentState === "Login" ? "Login" : "Sign Up"}
       </button>
     </form>
   );

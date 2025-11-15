@@ -15,6 +15,8 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Verify } from "./pages/Verify";
 import { ForgotPassword } from "./pages/ForgotPassword";
+import VerifyEmail from "./pages/VerifyEmail ";
+import LoginOTP from "./pages/LoginOTP";
 
 const App = () => {
   return (
@@ -33,6 +35,8 @@ const App = () => {
         <Route path="/place-order" element={<PlaceOrder />} />
         <Route path="/about" element={<About />} />
         <Route path="/verify" element={<Verify />} />
+        <Route path="/verify-email/:user_id" element={<VerifyEmail />} />
+        <Route path="/login-otp" element={<LoginOTP />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
       <Footer />
