@@ -13,7 +13,12 @@ import {
   renderStatusEmail,
 } from "../templates/orderStatusEmails.js";
 import orderTimelineModel from "../models/orderTimelineModel.js";
-import { CANCEL_CUTOFF, STATUS_FLOW, STATUS_RANK, TERMINAL_STATUSES } from "../config/orderStatus.js";
+import {
+  CANCEL_CUTOFF,
+  STATUS_FLOW,
+  STATUS_RANK,
+  TERMINAL_STATUSES,
+} from "../config/orderStatus.js";
 
 const currency = "usd";
 const deliveryCharge = 10;
@@ -158,17 +163,6 @@ const placeOrderStripe = async (req, res) => {
     // ✨ timeline
     await seedPlacedTimeline(newOrder, user);
 
-    await sendMail(
-      user.email,
-      "Order Initiated - Pending Payment",
-      "<p>Your order is created. Complete Stripe payment to confirm.</p>"
-    );
-    await sendMail(
-      process.env.ADMIN_EMAIL,
-      "Stripe Order Initiated",
-      adminOrderTemplate(newOrder, items, user)
-    );
-
     const line_items = [
       ...items.map((item) => ({
         price_data: {
@@ -220,10 +214,15 @@ const verifyStripe = async (req, res) => {
       await updateProductStock(order.items);
 
       await userModel.findByIdAndUpdate(userId, { cartData: {} });
+      const user = await userModel.findById(userId);
 
       // Optional: add a timeline note (status stays the same)
       // await appendTimeline({ orderId, status: order.status, note: "Stripe payment confirmed" });
-
+      await sendMail(
+        user.email,
+        "Order Placed ✔",
+        userOrderTemplate(order, order.items)
+      );
       return res.json({ success: true });
     } else {
       await orderModel.findByIdAndDelete(orderId);
@@ -258,17 +257,6 @@ const placeOrderRazorpay = async (req, res) => {
 
     // ✨ timeline
     await seedPlacedTimeline(newOrder, user);
-
-    await sendMail(
-      user.email,
-      "Order Created - Wait for Payment",
-      "<p>Complete payment to confirm.</p>"
-    );
-    await sendMail(
-      process.env.ADMIN_EMAIL,
-      "New Razorpay Order",
-      adminOrderTemplate(newOrder, items, user)
-    );
 
     const options = {
       amount: amount * 100,
@@ -309,9 +297,13 @@ const verifyRazorpay = async (req, res) => {
       await updateProductStock(order.items);
 
       await userModel.findByIdAndUpdate(userId, { cartData: {} });
-
-      // Optional: timeline payment note
-      // await appendTimeline({ orderId: order._id, status: order.status, note: "Razorpay payment confirmed" });
+      const user = await userModel.findById(userId);
+      
+      await sendMail(
+        user.email,
+        "Order Placed ✔",
+        userOrderTemplate(order, order.items)
+      );
 
       return res.json({ success: true, message: "Payment successful" });
     }
@@ -543,7 +535,6 @@ const getCurrentOrderStatus = async (req, res) => {
   }
 };
 
-
 const userUpdateStatus = async (req, res) => {
   try {
     const {
@@ -555,7 +546,7 @@ const userUpdateStatus = async (req, res) => {
       actorId,
     } = req.body;
 
-    if (! status === 'Cancelled') {
+    if (!status === "Cancelled") {
       return res.json({ success: false, message: "Invalid status" });
     }
 
@@ -634,5 +625,5 @@ export {
   updateStatus,
   getOrderTimeline,
   getCurrentOrderStatus,
-  userUpdateStatus
+  userUpdateStatus,
 };
