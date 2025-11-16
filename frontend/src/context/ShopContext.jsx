@@ -41,7 +41,7 @@ const ShopContextProvider = (props) => {
           { itemId, size },
           { headers: { token } }
         );
-        toast.success('Item Added to Cart');
+        // toast.success('Item Added to Cart');
       } catch (error) {
         console.log(error);
         toast.error(error.message);
@@ -110,7 +110,7 @@ const ShopContextProvider = (props) => {
 
   const getProductsData = async () => {
     try {
-      const response = await axios.get(backendUrl + "/api/product/list");
+      const response = await axios.get(backendUrl + "/api/product/list-page");
       if (response.data.success) {
         setProducts(response.data.products);
       } else {

@@ -69,7 +69,7 @@ const Navbar = () => {
             src={assets.profile_icon}
             alt="Profile Icon"
             className="w-5 cursor-pointer"
-            onClick={() => (token ? null : navigate("/login"))}
+            onClick={() => (token ? navigate('/profile') : navigate("/login"))}
           />
           {/* Dropdown Menu */}
           {token ? (

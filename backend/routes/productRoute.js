@@ -2,6 +2,7 @@ import express from "express";
 import {
   addProduct,
   listProduct,
+  listProductPage,
   removeProduct,
   singleProduct,
   updateProduct,
@@ -25,6 +26,7 @@ productRouter.post(
 productRouter.post("/remove", adminAuth, removeProduct);
 productRouter.post("/single", singleProduct);
 productRouter.get("/list", listProduct);
+productRouter.get("/list-page", listProductPage);
 productRouter.post(
   "/update",
   upload.fields([

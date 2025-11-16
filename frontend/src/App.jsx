@@ -17,6 +17,8 @@ import { Verify } from "./pages/Verify";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import LoginOTP from "./pages/LoginOTP";
+import Profile from "./pages/Profile";
+import SetPassword from "./pages/SetPassword";
 
 const App = () => {
   return (
@@ -38,6 +40,8 @@ const App = () => {
         <Route path="/verify-email/:user_id" element={<VerifyEmail />} />
         <Route path="/login-otp" element={<LoginOTP />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/set-password" element={<SetPassword />} />
       </Routes>
       <Footer />
     </div>

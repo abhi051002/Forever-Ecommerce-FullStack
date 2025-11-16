@@ -145,6 +145,15 @@ const listProduct = async (req, res) => {
   }
 };
 
+const listProductPage = async (req, res) => {
+  try {
+    const products = await productModel.find({});
+    res.json({ success: true, products });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
 // Remove product
 const removeProduct = async (req, res) => {
   try {
@@ -260,4 +269,4 @@ const updateProduct = async (req, res) => {
   }
 };
 
-export { addProduct, listProduct, removeProduct, singleProduct, updateProduct };
+export { addProduct, listProduct,listProductPage, removeProduct, singleProduct, updateProduct };

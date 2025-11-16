@@ -227,7 +227,7 @@ const ProductUpdateModal = ({ product, closeModal, refreshList, token }) => {
 
             return (
               <div
-                key={size}
+                key={`size-${size}`}
                 className={`p-4 border rounded-xl transition shadow-sm relative ${
                   selected ? "bg-pink-50 border-pink-500" : "bg-white"
                 }`}

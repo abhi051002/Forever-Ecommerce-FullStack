@@ -7,13 +7,16 @@ import registerOtpTemplate from "../templates/registerOtpTemplate.js";
 import loginOtpTemplate from "../templates/loginOtpTemplate.js";
 import resendRegisterOtpTemplate from "../templates/resendRegisterOtpTemplate.js";
 import resendLoginOtpTemplate from "../templates/resendLoginOtpTemplate.js";
-
+import crypto from "crypto";
+import { changePasswordTemplate } from "../templates/changePasswordTemplate.js";
+import { resetPasswordTemplate } from "../templates/resetPasswordTemplate.js";
 
 const createToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
-const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+const generateOTP = () =>
+  Math.floor(100000 + Math.random() * 900000).toString();
 
 // 🧑‍💻 User Login
 const loginUser = async (req, res) => {
@@ -45,8 +48,12 @@ const loginUser = async (req, res) => {
       "Your Login OTP",
       loginOtpTemplate(otp, user.name)
     );
-    res.json({ success: true, message: "OTP sent", userId: user._id, email: user.email });
-
+    res.json({
+      success: true,
+      message: "OTP sent",
+      userId: user._id,
+      email: user.email,
+    });
   } catch (error) {
     console.error(error);
     res.json({ success: false, message: error.message });
@@ -120,16 +127,12 @@ const registerUser = async (req, res) => {
 
     const user = await newUser.save();
 
-    await sendMail(
-      email,
-      "Verify Your Email",
-      registerOtpTemplate(otp, name)
-    );
+    await sendMail(email, "Verify Your Email", registerOtpTemplate(otp, name));
 
     res.json({
       success: true,
       message: "User registered successfully",
-      user: user
+      user: user,
     });
   } catch (error) {
     console.error(error);
@@ -155,7 +158,6 @@ const verifyOTP = async (req, res) => {
   res.json({ success: true, message: "Email verified successfully" });
 };
 
-
 // 👑 Admin Login
 const adminLogin = async (req, res) => {
   try {
@@ -165,11 +167,9 @@ const adminLogin = async (req, res) => {
       email === process.env.ADMIN_EMAIL &&
       password === process.env.ADMIN_PASSWORD
     ) {
-      const token = jwt.sign(
-        { email, role: "admin" },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-      );
+      const token = jwt.sign({ email, role: "admin" }, process.env.JWT_SECRET, {
+        expiresIn: "1d",
+      });
       res.json({ success: true, token });
     } else {
       res.json({ success: false, message: "Invalid credentials" });
@@ -300,5 +300,118 @@ const resendLoginOTP = async (req, res) => {
   }
 };
 
+// POST /api/user/forgot
+const requestPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body;
 
-export { loginUser, registerUser, adminLogin, changePassword, verifyOTP, verifyLoginOTP, resendLoginOTP, resendRegisterOTP };
+    // Always respond with the same message (no user enumeration)
+    const genericMsg =
+      "If an account exists for this email, you’ll receive a reset link shortly.";
+
+    if (!email) return res.json({ success: true, message: genericMsg });
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.json({ success: true, message: genericMsg });
+    }
+
+    // Create raw token and hashed token
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashed = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+    user.passwordResetToken = hashed;
+    user.passwordResetExpiry = Date.now() + 60 * 60 * 1000; // 1 hour
+    await user.save();
+
+    // Build frontend link
+    const frontendBase =
+      process.env.FRONTEND_URL || req.headers.origin || "http://localhost:5173";
+    const link = `${frontendBase}/set-password?token=${rawToken}`;
+
+    await sendMail(
+      email,
+      "Reset Your Password",
+      resetPasswordTemplate(user.name || "there", link)
+    );
+
+    return res.json({ success: true, message: genericMsg });
+  } catch (err) {
+    console.error(err);
+    return res.json({
+      success: true, // still generic
+      message:
+        "If an account exists for this email, you’ll receive a reset link shortly.",
+    });
+  }
+};
+
+// POST /api/user/reset-password
+const resetPasswordWithToken = async (req, res) => {
+  try {
+    const { token, password, confirmPassword } = req.body;
+
+    if (!token || !password || !confirmPassword) {
+      return res.json({ success: false, message: "Invalid request" });
+    }
+    if (password !== confirmPassword) {
+      return res.json({ success: false, message: "Passwords do not match" });
+    }
+    // Basic password rules (match your register rules if you want)
+    if (password.length < 8) {
+      return res.json({
+        success: false,
+        message: "Password must be at least 8 characters long",
+      });
+    }
+
+    const hashed = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await userModel.findOne({
+      passwordResetToken: hashed,
+      passwordResetExpiry: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "Token is invalid or has expired",
+      });
+    }
+
+    // Prevent reuse
+    user.passwordResetToken = undefined;
+    user.passwordResetExpiry = undefined;
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+
+    await user.save();
+    await sendMail(
+      user.email,
+      "Your Password Has Been Changed Successfully",
+      changePasswordTemplate(user.name)
+    );
+    return res.json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.json({ success: false, message: "Something went wrong" });
+  }
+};
+
+export {
+  loginUser,
+  registerUser,
+  adminLogin,
+  changePassword,
+  verifyOTP,
+  verifyLoginOTP,
+  resendLoginOTP,
+  resendRegisterOTP,
+  requestPasswordReset,
+  resetPasswordWithToken
+};

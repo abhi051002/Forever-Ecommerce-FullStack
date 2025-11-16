@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { backEndURL, currency } from "../App";
 import { toast } from "react-toastify";
@@ -6,6 +6,7 @@ import ProductUpdateModal from "./ProductUpdateModal";
 import { FiEdit } from "react-icons/fi";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { IoSearchOutline } from "react-icons/io5";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
 
 const List = ({ token }) => {
   const [list, setList] = useState([]);
@@ -20,8 +21,12 @@ const List = ({ token }) => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10);
-
   const [totalPages, setTotalPages] = useState(1);
+
+  // Delete modal state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [toDelete, setToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch List With Filters & Pagination
   const fetchList = async () => {
@@ -48,27 +53,39 @@ const List = ({ token }) => {
     }
   };
 
-  const removeProduct = async (id) => {
+  const openDeleteModal = (item) => {
+    setToDelete(item);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!toDelete?._id) return;
     try {
+      setDeleting(true);
       const response = await axios.post(
         backEndURL + "/api/product/remove",
-        { id },
+        { id: toDelete._id },
         { headers: { token } }
       );
       if (response.data.success) {
-        toast.success(response.data.message);
+        toast.success(response.data.message || "Product deleted");
+        setConfirmOpen(false);
+        setToDelete(null);
         fetchList();
       } else {
-        toast.error(response.data.message);
+        toast.error(response.data.message || "Delete failed");
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || "Network error");
+    } finally {
+      setDeleting(false);
     }
   };
 
   useEffect(() => {
     fetchList();
-  }, [currentPage]); // update when page changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   // Apply filters
   const applyFilters = () => {
@@ -80,7 +97,6 @@ const List = ({ token }) => {
     <>
       <p className="mb-3 text-lg font-semibold">Product Management</p>
 
-      {/* SEARCH + FILTERS */}
       {/* SEARCH + FILTERS */}
       <div className="bg-white p-4 rounded-lg shadow mb-4 grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Search */}
@@ -134,7 +150,6 @@ const List = ({ token }) => {
 
         {/* BUTTONS — Apply + Clear */}
         <div className="md:col-span-4 flex gap-3">
-          {/* APPLY FILTERS */}
           <button
             className="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
             onClick={applyFilters}
@@ -142,7 +157,6 @@ const List = ({ token }) => {
             Apply Filters
           </button>
 
-          {/* CLEAR FILTERS */}
           <button
             className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-md hover:bg-gray-400 transition"
             onClick={() => {
@@ -151,7 +165,7 @@ const List = ({ token }) => {
               setSubCategory("");
               setBestseller("");
               setCurrentPage(1);
-              fetchList(); // reload all products
+              fetchList();
             }}
           >
             Clear Filters
@@ -187,9 +201,7 @@ const List = ({ token }) => {
             />
 
             <p className="font-medium">{item.name}</p>
-
             <p className="text-gray-600">{item.category}</p>
-
             <p className="font-semibold">
               {currency}
               {item.price}
@@ -209,7 +221,7 @@ const List = ({ token }) => {
             {/* Delete */}
             <button
               className="hidden md:flex justify-center text-red-500 hover:text-red-700 transition"
-              onClick={() => removeProduct(item._id)}
+              onClick={() => openDeleteModal(item)}
             >
               <RiDeleteBin6Line size={20} />
             </button>
@@ -227,7 +239,7 @@ const List = ({ token }) => {
               </button>
 
               <button
-                onClick={() => removeProduct(item._id)}
+                onClick={() => openDeleteModal(item)}
                 className="text-red-500 hover:text-red-700 transition"
               >
                 <RiDeleteBin6Line size={20} />
@@ -239,7 +251,6 @@ const List = ({ token }) => {
 
       {/* PAGINATION */}
       <div className="flex justify-center gap-2 mt-5">
-        {/* Prev */}
         <button
           disabled={currentPage === 1}
           onClick={() => setCurrentPage((p) => p - 1)}
@@ -248,7 +259,6 @@ const List = ({ token }) => {
           Prev
         </button>
 
-        {/* Page Numbers */}
         {Array.from({ length: totalPages }, (_, i) => (
           <button
             key={i}
@@ -261,7 +271,6 @@ const List = ({ token }) => {
           </button>
         ))}
 
-        {/* Next */}
         <button
           disabled={currentPage === totalPages}
           onClick={() => setCurrentPage((p) => p + 1)}
@@ -281,6 +290,20 @@ const List = ({ token }) => {
           token={token}
         />
       )}
+
+      {/* CONFIRM DELETE MODAL */}
+      <ConfirmDeleteModal
+        open={confirmOpen}
+        onClose={() => {
+          if (!deleting) {
+            setConfirmOpen(false);
+            setToDelete(null);
+          }
+        }}
+        onConfirm={confirmDelete}
+        product={toDelete}
+        loading={deleting}
+      />
     </>
   );
 };
