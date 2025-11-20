@@ -1,3 +1,4 @@
+// src/pages/Login.jsx
 import React, { useContext, useEffect, useState } from "react";
 import { ShopContext } from "../context/ShopContext";
 import { toast } from "react-toastify";
@@ -11,7 +12,7 @@ import {
   ArrowRight,
   ShoppingBag,
 } from "lucide-react";
-import { GoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin } from "@react-oauth/google";
 
 const Login = () => {
   const { token, setToken, navigate, backendUrl } = useContext(ShopContext);
@@ -24,41 +25,37 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (token) navigate("/");
+  }, [token]);
+
   const onSubmitHandler = async (e) => {
     e.preventDefault();
-
     try {
       setLoading(true);
       if (currentState === "Sign Up") {
-        // REGISTER API
         const response = await axios.post(backendUrl + "/api/user/register", {
           name,
           email,
           password,
         });
-
         if (response.data.success) {
-          // Store email for OTP verification
           localStorage.setItem("verifyEmail", response.data.user.email);
           localStorage.setItem("verifyUserId", response.data.user._id);
-
           toast.success("OTP sent to your email.");
           navigate(`/verify-email/${response.data.user._id}`);
         } else {
           toast.error(response.data.message);
         }
       } else {
-        // LOGIN API
         const response = await axios.post(backendUrl + "/api/user/login", {
           email,
           password,
           isOtp,
         });
         if (response.data.success && !response.data.token) {
-          // Store email for login OTP
           localStorage.setItem("loginEmail", response.data.email);
           localStorage.setItem("loginUserId", response.data.userId);
-
           toast.success("OTP sent to your email.");
           navigate("/login-otp");
         } else if (response.data.success && response.data.token) {
@@ -71,22 +68,14 @@ const Login = () => {
         }
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (token) {
-      navigate("/");
-    }
-  }, [token]);
-
-  const handleOTPPassword = () => {
-    setIsOtp(!isOtp);
-  };
+  const handleOTPPassword = () => setIsOtp(!isOtp);
 
   const handleFormState = (state = "Login") => {
     setCurrentState(state);
@@ -95,8 +84,29 @@ const Login = () => {
     setName("");
   };
 
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const accessToken = tokenResponse.access_token;
+        const resp = await axios.post(backendUrl + "/api/user/auth/google", {
+          accessToken,
+        });
+        setToken(resp.data.token);
+        localStorage.setItem("token", resp.data.token);
+        navigate("/");
+      } catch (err) {
+        console.error("Google login error:", err);
+        toast.error(err.response?.data?.message || "Google login failed");
+      }
+    },
+    onError: () => {
+      toast.error("Google Sign In Failed");
+    },
+    scope: "openid profile email",
+  });
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br py-12 px-4 sm:px-6 lg:px-8 from-gray-50 to-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
         {/* Branding */}
         <div className="text-center mb-4">
@@ -113,25 +123,8 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Header */}
-        {/* <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-black rounded-2xl mb-4 shadow-lg">
-            <User className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            {currentState === "Login" ? "Welcome Back" : "Create Account"}
-          </h2>
-          <p className="text-gray-600">
-            {currentState === "Login"
-              ? "Sign in to continue to your account"
-              : "Sign up to get started"}
-          </p>
-        </div> */}
-
-        {/* Form Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
           <form onSubmit={onSubmitHandler} className="space-y-5">
-            {/* Name Input - Only for Sign Up */}
             {currentState === "Sign Up" && (
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -151,7 +144,6 @@ const Login = () => {
               </div>
             )}
 
-            {/* Email Input */}
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
@@ -169,7 +161,6 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Password Input - Conditional */}
             {(isOtp || currentState !== "Login") && (
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -200,7 +191,6 @@ const Login = () => {
               </div>
             )}
 
-            {/* OTP/Password Toggle */}
             {currentState == "Login" && (
               <div className="flex items-center justify-center">
                 <button
@@ -213,7 +203,6 @@ const Login = () => {
               </div>
             )}
 
-            {/* Additional Links */}
             {currentState === "Login" ? (
               <div className="flex justify-between items-center text-sm">
                 <button
@@ -243,7 +232,6 @@ const Login = () => {
               </div>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -270,38 +258,45 @@ const Login = () => {
                 </>
               )}
             </button>
-            <div className="mt-3 flex justify-center">
-              <div className="w-full max-w-sm">
-                <GoogleLogin
-                  onSuccess={(credentialResponse) => {
-                    // credentialResponse.credential is a JWT ID token (string)
-                    const idToken = credentialResponse.credential;
-                    // send the id token to your backend to verify / create session
-                    axios
-                      .post(backendUrl + "/api/user/auth/google", { idToken })
-                      .then((resp) => {
-                        console.log(resp);
-                        // resp should contain your app token or user info
-                        setToken(resp.data.token);
-                        localStorage.setItem("token", resp.data.token);
-                        navigate("/");
-                      })
-                      .catch((err) => {
-                        toast.error(
-                          err.response?.data?.message || "Google login failed"
-                        );
-                      });
-                  }}
-                  onError={() => {
-                    toast.error("Google Sign In Failed");
-                  }}
-                />
-              </div>
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => googleLogin()}
+                className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-lg py-3 px-4 hover:shadow transition"
+              >
+                <svg
+                  version="1.1"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 48 48"
+                  className="w-5 h-5"
+                >
+                  <g>
+                    <path
+                      fill="#EA4335"
+                      d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+                    />
+                    <path
+                      fill="#4285F4"
+                      d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+                    />
+                    <path fill="none" d="M0 0h48v48H0z" />
+                  </g>
+                </svg>
+
+                <span className="text-sm font-medium">Sign in with Google</span>
+              </button>
             </div>
           </form>
         </div>
 
-        {/* Footer */}
         <p className="mt-6 text-center text-sm text-gray-600">
           By continuing, you agree to our Terms of Service and Privacy Policy
         </p>
