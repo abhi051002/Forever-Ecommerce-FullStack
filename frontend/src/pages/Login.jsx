@@ -96,7 +96,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br py-12 px-4 sm:px-6 lg:px-8 from-gray-50 to-gray-100">
       <div className="max-w-md w-full">
         {/* Branding */}
         <div className="text-center mb-4">
@@ -270,31 +270,34 @@ const Login = () => {
                 </>
               )}
             </button>
-
-            <GoogleLogin
-              onSuccess={(credentialResponse) => {
-                // credentialResponse.credential is a JWT ID token (string)
-                const idToken = credentialResponse.credential;
-                // send the id token to your backend to verify / create session
-                axios
-                  .post(backendUrl + "/api/user/auth/google", { idToken })
-                  .then((resp) => {
-                    console.log(resp);
-                    // resp should contain your app token or user info
-                    setToken(resp.data.token);
-                    localStorage.setItem("token", resp.data.token);
-                    navigate("/");
-                  })
-                  .catch((err) => {
-                    toast.error(
-                      err.response?.data?.message || "Google login failed"
-                    );
-                  });
-              }}
-              onError={() => {
-                toast.error("Google Sign In Failed");
-              }}
-            />
+            <div className="mt-3 flex justify-center">
+              <div className="w-full max-w-sm">
+                <GoogleLogin
+                  onSuccess={(credentialResponse) => {
+                    // credentialResponse.credential is a JWT ID token (string)
+                    const idToken = credentialResponse.credential;
+                    // send the id token to your backend to verify / create session
+                    axios
+                      .post(backendUrl + "/api/user/auth/google", { idToken })
+                      .then((resp) => {
+                        console.log(resp);
+                        // resp should contain your app token or user info
+                        setToken(resp.data.token);
+                        localStorage.setItem("token", resp.data.token);
+                        navigate("/");
+                      })
+                      .catch((err) => {
+                        toast.error(
+                          err.response?.data?.message || "Google login failed"
+                        );
+                      });
+                  }}
+                  onError={() => {
+                    toast.error("Google Sign In Failed");
+                  }}
+                />
+              </div>
+            </div>
           </form>
         </div>
 
