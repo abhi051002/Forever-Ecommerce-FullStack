@@ -6,14 +6,15 @@ A full-featured MERN stack eCommerce application with secure OTP authentication,
 
 # 🚀 New Features Added
 
-## 🔐 Email OTP Verification (Register & Login)
+## 🔐 Email OTP Verification (Register)
 
 - OTP sent to user email at **registration** for account verification  
-- OTP sent again during **login** for secure authentication  
 - OTP expires after a few minutes  
 - **Resend OTP** appears after a 60-second timer  
 - User cannot log in without verifying email  
 
+## 🔑 Google Login (Register & Login)
+- You can directly register / login thruogh gmail account to application
 ---
 
 ## ✉ Order Email Notifications
@@ -50,10 +51,22 @@ User Side Features:
 
 ### 🔐 Login & Register
 
-![Login Page](frontend/src/assets/login.png)
+![Login Page With Password](frontend/src/assets/login.png)
+![Login Page With OTP](frontend/src/assets/login-with-otp.png)
 ![Signup Page](frontend/src/assets/signup.png)
 
 ---
+
+### OTP Verify
+
+![OTP Verify Page](frontend/src/assets/otp-verify.png)
+
+---
+
+### Forgot Password & Reset Password
+
+![Forgot Password](frontend/src/assets/forgot-password.png)
+![Reset Password](frontend/src/assets/reset-password.png)
 
 ### 🏠 Homepage
 
@@ -140,6 +153,7 @@ User Side Features:
 | **cloudinary** | Image hosting |
 | **bcrypt** | Encrypt passwords |
 | **nodemailer** | Send OTP emails & order emails |
+| **google-auth-library** | Verify Google ID Tokens |
 
 ---
 
@@ -192,6 +206,9 @@ STRIPE_SECRET=xxxx
 RAZORPAY_KEY_ID=xxxx
 RAZORPAY_KEY_SECRET=xxxx
 
+# Google Login
+GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
+JWT_SECRET=your_app_jwt_secret
 ```
 
 ----

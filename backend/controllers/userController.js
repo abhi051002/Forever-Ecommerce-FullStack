@@ -10,6 +10,7 @@ import resendLoginOtpTemplate from "../templates/resendLoginOtpTemplate.js";
 import crypto from "crypto";
 import { changePasswordTemplate } from "../templates/changePasswordTemplate.js";
 import { resetPasswordTemplate } from "../templates/resetPasswordTemplate.js";
+import { OAuth2Client } from "google-auth-library";
 
 const createToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -21,7 +22,7 @@ const generateOTP = () =>
 // 🧑‍💻 User Login
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, isOtp } = req.body;
 
     // Check if user exists
     const user = await userModel.findOne({ email });
@@ -29,25 +30,31 @@ const loginUser = async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
 
-    if (!user.isVerified)
-      return res.json({ success: false, message: "Email not verified" });
+    if (isOtp) {
+      const isMatched = await bcrypt.compare(password, user.password);
+      if (!isMatched) {
+        return res.json({ success: false, message: "Invalid credentials" });
+      }
+      if (!user.isVerified) {
+        await sendLoginOtp(user);
+        user.isVerified = true;
+        await user.save();
+        res.json({
+          success: true,
+          message: "OTP sent",
+          userId: user._id,
+          email: user.email,
+        });
+      }
 
-    // Compare passwords
-    const isMatched = await bcrypt.compare(password, user.password);
-    if (!isMatched) {
-      return res.json({ success: false, message: "Invalid credentials" });
+      const token = createToken(user._id);
+      return res.json({
+        success: true,
+        message: "User credentials are correct",
+        token,
+      });
     }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.otp = otp;
-    user.otpExpiry = Date.now() + 5 * 60 * 1000;
-    await user.save();
-
-    await sendMail(
-      user.email,
-      "Your Login OTP",
-      loginOtpTemplate(otp, user.name)
-    );
+    await sendLoginOtp(user);
     res.json({
       success: true,
       message: "OTP sent",
@@ -58,6 +65,19 @@ const loginUser = async (req, res) => {
     console.error(error);
     res.json({ success: false, message: error.message });
   }
+};
+
+const sendLoginOtp = async (user) => {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  user.otp = otp;
+  user.otpExpiry = Date.now() + 5 * 60 * 1000;
+  await user.save();
+
+  await sendMail(
+    user.email,
+    "Your Login OTP",
+    loginOtpTemplate(otp, user.name)
+  );
 };
 
 // 🧾 User Registration
@@ -403,6 +423,50 @@ const resetPasswordWithToken = async (req, res) => {
   }
 };
 
+const googleAuth = async (req, res) => {
+  const { idToken } = req.body;
+  if (!idToken)
+    return res.status(400).json({ success: false, message: "Missing idToken" });
+
+  try {
+    const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+    const client = new OAuth2Client(CLIENT_ID);
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const googleId = payload.sub;
+    const email = payload.email;
+
+    let user = await userModel.findOne({ email });
+
+    if (user) {
+      user.googleId = googleId;
+      user.isVerified = true;
+      await user.save();
+    } else {
+      const newUser = new userModel({
+        name: payload.name,
+        email,
+        googleId,
+        isVerified: true,
+      });
+
+      user = await newUser.save();
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    res.json({ success: true, token, message: "Login Successful" });
+  } catch (err) {
+    console.error(err);
+    res.status(401).json({ success: false, message: "Invalid ID token" });
+  }
+};
+
 export {
   loginUser,
   registerUser,
@@ -413,5 +477,6 @@ export {
   resendLoginOTP,
   resendRegisterOTP,
   requestPasswordReset,
-  resetPasswordWithToken
+  resetPasswordWithToken,
+  googleAuth
 };

@@ -25,3 +25,5 @@
 12. bcrypt : Encrypts and stores user passwords securely.
 
 13. nodemailer : Allows sending emails (OTP, verification, login OTP, etc.) using SMTP.
+
+14. google-auth-library : Verifies Google ID tokens on the backend, enabling secure Google login integration.

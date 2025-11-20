@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Collection from "./pages/Collection";
@@ -21,11 +21,25 @@ import Profile from "./pages/Profile";
 import SetPassword from "./pages/SetPassword";
 
 const App = () => {
+  const location = useLocation();
+
+  const hideNavbarFooter = [
+    "/login",
+    "/login-otp",
+    "/forgot-password",
+    "/verify",
+    "/verify-email",
+    "/set-password",
+  ];
+
+  const shouldHideLayout = hideNavbarFooter.some((path) =>
+    location.pathname.startsWith(path)
+  );
   return (
     <div className="px-4 sm:px-[5vw] md:px-[7vw]">
       <ToastContainer />
-      <Navbar />
-      <SearchBar />
+      {!shouldHideLayout && <Navbar />}
+      {!shouldHideLayout && <SearchBar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/collection" element={<Collection />} />
@@ -43,7 +57,7 @@ const App = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/set-password" element={<SetPassword />} />
       </Routes>
-      <Footer />
+      {!shouldHideLayout && <Footer />}
     </div>
   );
 };
