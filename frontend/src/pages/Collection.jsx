@@ -50,7 +50,6 @@ const Collection = () => {
 
   const sortProducts = () => {
     let filteredProductsCopy = filterProducts.slice();
-    // filteredProductsCopy.sort((a, b) => b.price - a.price);
 
     switch (sortType) {
       case "low-high":

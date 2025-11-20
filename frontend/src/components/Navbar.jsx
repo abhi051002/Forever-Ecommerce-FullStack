@@ -43,7 +43,11 @@ const Navbar = () => {
           <p>Contact</p>
           <hr className="w-2/4 border-none h-[1.5px] bg-gray-700 hidden" />
         </NavLink>
-        <NavLink
+        <NavLink className="flex flex-col items-center gap-1" to="/orders">
+          <p>Orders</p>
+          <hr className="w-2/4 border-none h-[1.5px] bg-gray-700 hidden" />
+        </NavLink>
+        {/* <NavLink
           className="flex flex-col items-center gap-1"
           to="https://forever-admin-pannel.vercel.app"
           target="_blank"
@@ -52,7 +56,7 @@ const Navbar = () => {
             Admin Panel
           </p>
           <hr className="w-2/4 border-none h-[1.5px] bg-gray-700 hidden" />
-        </NavLink>
+        </NavLink> */}
       </ul>
 
       <div className="flex items-center gap-6">
@@ -69,13 +73,13 @@ const Navbar = () => {
             src={assets.profile_icon}
             alt="Profile Icon"
             className="w-5 cursor-pointer"
-            onClick={() => (token ? navigate('/profile') : navigate("/login"))}
+            onClick={() => (token ? '' : navigate("/login"))}
           />
           {/* Dropdown Menu */}
           {token ? (
             <div className="group-hover:block hidden absolute dropdown-menu right-0 pt-4">
               <div className="flex flex-col gap-2 w-36 py-3 px-5 bg-slate-100 text-gray-500 rounded">
-                <p className="cursor-pointer hover:text-black">My Profile</p>
+                <p className="cursor-pointer hover:text-black" onClick={() => navigate('/profile')}>My Profile</p>
                 <p
                   className="cursor-pointer hover:text-black"
                   onClick={() => navigate("/orders")}
@@ -151,11 +155,18 @@ const Navbar = () => {
           <NavLink
             className="py-4 pl-6 border"
             onClick={() => setVisible(false)}
+            to="/orders"
+          >
+            <p>Orders</p>
+          </NavLink>
+          {/* <NavLink
+            className="py-4 pl-6 border"
+            onClick={() => setVisible(false)}
             to="https://forever-admin-pannel.vercel.app"
             target="_blank"
           >
             <p>Admin Panel</p>
-          </NavLink>
+          </NavLink> */}
         </div>
       </div>
     </div>
